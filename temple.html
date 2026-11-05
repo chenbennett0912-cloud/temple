@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>線上靈驗問事求籤亭</title>
+    <style>
+        body {
+            font-family: "Microsoft JhengHei", "Noto Serif TC", serif;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle, #800909 0%, #3a0000 100%);
+            color: #f7e1b5;
+        }
+
+        .temple-card {
+            background-color: rgba(20, 3, 3, 0.95);
+            border: 4px solid #d4af37;
+            border-radius: 15px;
+            padding: 30px 20px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(212, 175, 55, 0.3);
+        }
+
+        h1 {
+            color: #ffd700;
+            font-size: 26px;
+            margin-bottom: 5px;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px #000;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #d4af37;
+            margin-bottom: 20px;
+            border-bottom: 1px dashed #d4af37;
+            padding-bottom: 10px;
+        }
+
+        /* 模式切換分頁 */
+        .tab-container {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 8px 14px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #d4af37;
+            background-color: #2b0808;
+            border: 2px solid #b8860b;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            color: #fff;
+            background: linear-gradient(185deg, #a71d1d 0%, #630000 100%);
+            border-color: #ffd700;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s ease-in-out; }
+
+        label { display: block; font-size: 15px; margin-bottom: 10px; color: #f7e1b5; }
+        input[type="text"] {
+            width: 85%;
+            padding: 12px 15px;
+            font-size: 16px;
+            border: 2px solid #b8860b;
+            border-radius: 8px;
+            background-color: #2b0808;
+            color: #fff;
+            text-align: center;
+            outline: none;
+        }
+
+        .temple-btn {
+            margin-top: 15px;
+            padding: 12px 28px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #ffd700;
+            background: linear-gradient(185deg, #a71d1d 0%, #630000 100%);
+            border: 2px solid #ffd700;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            transition: transform 0.1s ease;
+        }
+        .temple-btn:active { transform: scale(0.95); }
+
+        .share-btn {
+            margin-top: 10px;
+            padding: 8px 16px;
+            font-size: 14px;
+            background-color: #b8860b;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        /* 儀式動畫 */
+        .anim-box {
+            font-size: 40px;
+            margin: 15px 0;
+            display: inline-block;
+        }
+        .shake { animation: shakeAnim 0.5s infinite; }
+        .flip { animation: flipAnim 0.6s ease-in-out infinite; }
+
+        @keyframes shakeAnim {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(-15deg); }
+            75% { transform: rotate(15deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        @keyframes flipAnim {
+            0% { transform: rotateX(0deg) translateY(0); }
+            50% { transform: rotateX(180deg) translateY(-20px); }
+            100% { transform: rotateX(360deg) translateY(0); }
+        }
+
+        /* 結果顯示 */
+        .result-box { margin-top: 15px; min-height: 50px; }
+        .result-text {
+            font-size: 18px; font-weight: bold; color: #ffffff;
+            background: rgba(184, 134, 11, 0.2);
+            border: 1px solid #d4af37; padding: 14px; border-radius: 8px;
+        }
+
+        .poem-card {
+            background: rgba(255, 248, 220, 0.95); color: #2b0808;
+            border: 3px double #800909; border-radius: 10px;
+            padding: 16px; margin-top: 10px; text-align: center;
+        }
+        .poem-title { font-size: 19px; font-weight: bold; color: #a71d1d; border-bottom: 2px solid #a71d1d; padding-bottom: 5px; }
+        .poem-status { font-size: 16px; font-weight: bold; color: #b8860b; margin: 6px 0; }
+        .poem-content { font-size: 16px; line-height: 1.6; font-weight: bold; white-space: pre-line; margin-bottom: 10px; }
+        .poem-explain { font-size: 13px; color: #444; background: #fff8e7; padding: 8px; border-radius: 5px; border-left: 4px solid #a71d1d; text-align: left; }
+
+        /* 歷史紀錄列表 */
+        .history-list {
+            max-height: 250px;
+            overflow-y: auto;
+            text-align: left;
+            margin-top: 10px;
+        }
+        .history-item {
+            background: rgba(255,255,255,0.05);
+            border-bottom: 1px dashed #b8860b;
+            padding: 8px;
+            font-size: 13px;
+        }
+        .history-time { color: #d4af37; font-size: 11px; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="temple-card">
+    <h1>⛩️ 聖明宮線上問事求籤亭 ⛩️</h1>
+    <div class="subtitle">誠心祈求 ‧ 聖意指點迷津</div>
+
+    <div class="tab-container">
+        <button class="tab-btn active" onclick="switchTab('ask')">🏮 擲筊問事</button>
+        <button class="tab-btn" onclick="switchTab('draw')">🧧 搖籤筒求籤</button>
+        <button class="tab-btn" onclick="switchTab('history')">📜 歷史紀錄</button>
+    </div>
+
+    <!-- 擲筊問事 -->
+    <div id="ask-tab" class="tab-content active">
+        <label for="ask-question">請默念問題（答案為 聖杯/蓋杯(陰杯/沒杯)/笑杯）：</label>
+        <input type="text" id="ask-question" placeholder="例如：這週面試會順利過關嗎？">
+        <br>
+        <button class="temple-btn" onclick="askTemple()">誠心擲筊請示</button>
+        <div id="ask-anim"></div>
+        <div id="ask-result" class="result-box"></div>
+    </div>
+
+    <!-- 搖籤筒求籤 -->
+    <div id="draw-tab" class="tab-content">
+        <label for="draw-question">請默念姓名與祈求指點之事：</label>
+        <input type="text" id="draw-question" placeholder="例如：祈求今年整體運勢指點">
+        <br>
+        <button class="temple-btn" onclick="drawSign()">誠心搖籤求籤</button>
+        <div id="draw-anim"></div>
+        <div id="draw-result" class="result-box"></div>
+    </div>
+
+    <!-- 歷史紀錄 -->
+    <div id="history-tab" class="tab-content">
+        <div style="display:flex; justify-scale:space-between; align-items:center;">
+            <span style="font-weight:bold;">📜 近期問事與求籤紀錄</span>
+            <button onclick="clearHistory()" style="background:#a71d1d; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:12px;">清除紀錄</button>
+        </div>
+        <div id="history-list" class="history-list"></div>
+    </div>
+</div>
+
+<script>
+    // Web Audio API 合成擬真打擊聲
+    function playSound(type) {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            if (type === 'jiao') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(150, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.8, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.15);
+            } else {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(300, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.5, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.2);
+            }
+        } catch(e) {}
+    }
+
+    // 分頁切換
+    function switchTab(mode) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+        if (mode === 'ask') {
+            document.querySelectorAll('.tab-btn')[0].classList.add('active');
+            document.getElementById('ask-tab').classList.add('active');
+        } else if (mode === 'draw') {
+            document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            document.getElementById('draw-tab').classList.add('active');
+        } else {
+            document.querySelectorAll('.tab-btn')[2].classList.add('active');
+            document.getElementById('history-tab').classList.add('active');
+            loadHistory();
+        }
+    }
+
+    // 擲筊邏輯
+    function askTemple() {
+        const q = document.getElementById('ask-question').value.trim();
+        const animBox = document.getElementById('ask-anim');
+        const resBox = document.getElementById('ask-result');
+
+        if (!q) {
+            resBox.innerHTML = '<div class="result-text" style="color:#ff9999;">⚠️ 請先誠心輸入您的問題！</div>';
+            return;
+        }
+
+        resBox.innerHTML = '';
+        animBox.innerHTML = '<div class="anim-box flip">🌙</div>';
+        playSound('jiao');
+
+        setTimeout(() => {
+            animBox.innerHTML = '';
+            const responses = [
+                "【聖杯】神明指示：聖筊！所求之事大吉可行！",
+                "【笑杯】神明指示：笑杯！神明笑而不答，請釐清問題後再試。",
+                "【陰杯】神明指示：蓋杯！時機未到或不可行，請三思。"
+            ];
+            const resultText = responses[Math.floor(Math.random() * responses.length)];
+            
+            resBox.innerHTML = `
+                <div class="result-text">${resultText}</div>
+                <button class="share-btn" onclick="copyResult('${q}', '${resultText}')">📋 複製結果給朋友</button>
+            `;
+            saveHistory('擲筊問事', q, resultText);
+        }, 1200);
+    }
+    
+    // 籤詩資料庫
+    const poems = [
+    // ===【第 01 ~ 10 籤】===
+    {
+        num: "第一籤【甲子】",
+        status: "【大吉】",
+        lines: "日出便見風雲散\n光明清淨照世間\n一向前途通大道\n萬事清吉保平安",
+        explain: "解曰：運勢如日東升，困難即將散去，前途一片光明，所求皆順。"
+    },
+    {
+        num: "第二籤【甲寅】",
+        status: "【上吉】",
+        lines: "於今此景正當時\n看看欲吐百花魁\n若能資得陰功願\n富貴榮華自此來",
+        explain: "解曰：時機成熟，正是大展鴻圖之際，多積陰德可保長遠富貴。"
+    },
+    {
+        num: "第三籤【甲辰】",
+        status: "【中吉】",
+        lines: "勸君把定心莫虛\n天註衣祿自有餘\n和合重重常吉慶\n時來運到物改疑",
+        explain: "解曰：切莫焦慮慌張，命中自有福祿，耐心等待時來運轉。"
+    },
+    {
+        num: "第四籤【甲午】",
+        status: "【平籤】",
+        lines: "風恬浪靜可行舟\n恰是中秋月一輪\n凡事不須多憂慮\n福祿自有公應君",
+        explain: "解曰：目前局勢平穩，維持現狀即可，不必過度操心。"
+    },
+    {
+        num: "第五籤【甲申】",
+        status: "【下吉 / 待時】",
+        lines: "只恐前途命有變\n勸君作急可宜先\n勸君把定心莫虛\n前途自有貴人引",
+        explain: "解曰：前路可能有變數，需提高警覺、提早準備，適時尋求貴人協助。"
+    },
+    {
+        num: "第六籤【甲戌】",
+        status: "【中吉】",
+        lines: "風雲聚會即將成\n萬物生長順天時\n若問前程何日達\n秋收冬藏必有期",
+        explain: "解曰：蓄積能量中，時機成熟自然回報，循序漸進收穫有期。"
+    },
+    {
+        num: "第七籤【乙丑】",
+        status: "【大吉】",
+        lines: "雲開月出正分明\n不須進退問前程\n婚姻皆由天註定\n莫聽旁人說短長",
+        explain: "解曰：守得雲開見月明，要有自主主張，不受旁人言語動搖。"
+    },
+    {
+        num: "第八籤【乙卯】",
+        status: "【平籤】",
+        lines: "禾稻看看結成完\n此事必定兩相全\n回到家鄉施一景\n富貴榮華萬萬年",
+        explain: "解曰：努力即將收穫，事事兩全其美，宜感恩回饋。"
+    },
+    {
+        num: "第九籤【乙巳】",
+        status: "【小吉】",
+        lines: "龍虎相隨在合當\n凡事必先審細詳\n吉凶禍福自有機\n切莫莽撞受波浪",
+        explain: "解曰：面臨選擇或競爭，凡事務必三思細查，切忌衝動。"
+    },
+    {
+        num: "第十籤【乙未】",
+        status: "【中平】",
+        lines: "花開今已結成實\n富貴榮華少人知\n若得貴人相引接\n前途順利莫疑惑",
+        explain: "解曰：成果隱含其中，若有貴人相助引路，勇敢向前。"
+    },
+
+    // ===【第 11 ~ 20 籤】===
+    {
+        num: "第十一籤【乙酉】",
+        status: "【下籤 / 謹慎】",
+        lines: "靈雞漸漸報爻音\n避凶趨吉在人心\n若能守己修善道\n前途危難自平沉",
+        explain: "解曰：警訊浮現，宜沉潛修心、多行善事，即可化解危機。"
+    },
+    {
+        num: "第十二籤【乙亥】",
+        status: "【上吉】",
+        lines: "長江風浪漸漸靜\n此刻安然可自由\n必有貴人相引接\n前途大道通宏洲",
+        explain: "解曰：風浪已過，局勢大好，前途通達流暢。"
+    },
+    {
+        num: "第十三籤【丙子】",
+        status: "【平籤】",
+        lines: "命中必然逢大吉\n茅屋因何入帝京\n莫聽旁人言左右\n自有一路光明行",
+        explain: "解曰：堅定信念，莫隨波逐流，自然迎來轉機。"
+    },
+    {
+        num: "第十四籤【丙寅】",
+        status: "【大吉】",
+        lines: "財中漸漸見分明\n花開葉茂自然成\n若得貴人相引接\n前途廣大保安康",
+        explain: "解曰：財運與事業漸入佳境，順其自然可成大業。"
+    },
+    {
+        num: "第十五籤【丙辰】",
+        status: "【上吉】",
+        lines: "八十原來是太公\n看看晚景鳳凰翁\n黃金尚有爭鬥日\n富貴由天莫苦求",
+        explain: "解曰：時機未到切莫急躁，保持平常心，好運隨後就到。"
+    },
+    {
+        num: "第十六籤【丙午】",
+        status: "【中吉】",
+        lines: "不須作急在心頭\n天註衣祿自有餘\n和合重重常吉慶\n時來運到萬事舒",
+        explain: "解曰：放寬心胸，命中福澤深厚，時機一到自然順遂。"
+    },
+    {
+        num: "第十七籤【丙申】",
+        status: "【平籤】",
+        lines: "舊恨重重未改為\n家中禍患報先知\n直須變更方得好\n木下依然春再回",
+        explain: "解曰：需要進行改變或革新，擺脫舊習慣才能重獲新生。"
+    },
+    {
+        num: "第十八籤【丙戌】",
+        status: "【中吉】",
+        lines: "君爾何須問聖賢\n前途光明在眼前\n寬心且去隨緣坐\n富貴由天莫苦求",
+        explain: "解曰：無須過度焦慮，前途大好，隨緣應對即獲佳績。"
+    },
+    {
+        num: "第十九籤【丁丑】",
+        status: "【下籤】",
+        lines: "富貴由天莫苦求\n萬事清吉保平安\n若問前程何日達\n且守本分莫強求",
+        explain: "解曰：切忌強求與投機，守好本分方能平安度過。"
+    },
+    {
+        num: "第二十籤【丁卯】",
+        status: "【上吉】",
+        lines: "前世作事今世因\n善惡到頭總有報\n若能積德行善道\n前途光明大吉昌",
+        explain: "解曰：種善因得善果，多行善事必獲神明庇佑。"
+    },
+    // ===【第 21 ~ 30 籤】===
+    {
+        num: "第二十一籤【丁巳】",
+        status: "【平籤】",
+        lines: "十方佛法有靈通\n大難禍患不相同\n紅日當空常照耀\n還有貴人通消息",
+        explain: "解曰：遇到困難莫慌張，自有神明護佑與貴人提供關鍵指引。"
+    },
+    {
+        num: "第二十二籤【丁未】",
+        status: "【上吉】",
+        lines: "太公家業八十成\n月出光輝四海明\n命內自然逢大吉\n茅屋因何入帝京",
+        explain: "解曰：轉運時刻已到，過去累積的努力即將看見曙光，大有展獲。"
+    },
+    {
+        num: "第二十三籤【丁酉】",
+        status: "【中吉】",
+        lines: "欲去長江浪澹澹\n前途未遂運未通\n如今便得橫財便\n不若安心守舊宗",
+        explain: "解曰：局勢稍有起伏，切忌貪圖近利或投機，安份守己最為保險。"
+    },
+    {
+        num: "第二十四籤【丁亥】",
+        status: "【平籤 / 謹慎】",
+        lines: "月出光輝本清吉\n浮雲總是蔽蔭色\n戶內安然無別事\n虛驚一場莫疑慮",
+        explain: "解曰：眼前的烏雲只是暫時的，不必杞人憂天，家道與本業皆安。"
+    },
+    {
+        num: "第二十五籤【戊子】",
+        status: "【大吉】",
+        lines: "總是前途莫心勞\n求神問卜家安康\n勸君把定心莫虛\n前途大道通宏洲",
+        explain: "解曰：免去無謂的操心，放寬心胸面對，前途自然一片大好。"
+    },
+    {
+        num: "第二十六籤【戊寅】",
+        status: "【中吉】",
+        lines: "選出牡丹第一枝\n勸君折履在當前\n若得貴人相引接\n富貴榮華自此連",
+        explain: "解曰：機會難得，當下即是最佳時機，切莫猶豫不決而錯失良機。"
+    },
+    {
+        num: "第二十七籤【戊辰】",
+        status: "【下籤 / 待時】",
+        lines: "君爾何須問聖賢\n前途困難在眼前\n寬心且去隨緣坐\n莫把強求當自由",
+        explain: "解曰：目前障礙較多，不宜盲目強求，先靜下心來觀望為宜。"
+    },
+    {
+        num: "第二十八籤【戊午】",
+        status: "【中吉】",
+        lines: "枯木逢春再發芽\n前途一片好光華\n若問事業與婚姻\n大吉大利順心花",
+        explain: "解曰：否極泰來，過去的低潮告一段落，即將迎來全新的契機。"
+    },
+    {
+        num: "第二十九籤【戊申】",
+        status: "【平籤】",
+        lines: "枯木逢春色漸新\n花開葉茂好更新\n若能守己修善道\n自然吉慶自來臨",
+        explain: "解曰：運勢漸漸回溫，多做好事、守好本份，吉事自然會發生。"
+    },
+    {
+        num: "第三十籤【戊戌】",
+        status: "【上吉】",
+        lines: "漸漸濃雲散復開\n漸漸亮月再重來\n前途大好無阻礙\n萬事順利得財寶",
+        explain: "解曰：障礙逐漸排除，事態越來越清晰，所求之事將順利達成。"
+    },
+
+    // ===【第 31 ~ 40 籤】===
+    {
+        num: "第三十一籤【己丑】",
+        status: "【中吉】",
+        lines: "福如東海壽如山\n君爾何須問聖賢\n前途光明在眼前\n萬事清吉保平安",
+        explain: "解曰：福氣深厚，無須過度掛慮，順著眼前的步調前進即可。"
+    },
+    {
+        num: "第三十二籤【己卯】",
+        status: "【平籤】",
+        lines: "龍虎相爭各不讓\n凡事必先審細詳\n退後一步自然寬\n和氣致祥保平安",
+        explain: "解曰：避免與人硬碰硬，退一步海闊天空，以和為貴能避開波折。"
+    },
+    {
+        num: "第三十三籤【己巳】",
+        status: "【小吉】",
+        lines: "欲去長江浪微動\n前途未遂運漸通\n若得貴人指路明\n安心前行必成功",
+        explain: "解曰：運勢正在轉通，若能傾聽身邊前輩或貴人的建議，更能事半功倍。"
+    },
+    {
+        num: "第三十四籤【己未】",
+        status: "【中吉】",
+        lines: "危險高山行過盡\n莫嫌此日雲霧濃\n若得貴人指引路\n切莫貪求求安康",
+        explain: "解曰：最艱難的路段已經過去，只要方向明確、不貪圖速成，平穩即是福。"
+    },
+    {
+        num: "第三十五籤【己酉】",
+        status: "【大吉】",
+        lines: "此事何須用心機\n前途光明任君行\n和合重重常吉慶\n富貴榮華自此起",
+        explain: "解曰：順其自然發展即可，不必刻意耍心機，好運自會水到渠成。"
+    },
+    {
+        num: "第三十六籤【己亥】",
+        status: "【下籤 / 守靜】",
+        lines: "福德正神常護佑\n爭名奪利事無成\n不如守舊安心坐\n莫待錯過悔當初",
+        explain: "解曰：切勿強求虛名浮利，盲目爭奪容易一無所獲，宜守舊靜觀其變。"
+    },
+    {
+        num: "第三十七籤【庚子】",
+        status: "【上吉】",
+        lines: "運逢得意身康泰\n麻雀化鳳上高臺\n前途廣大無阻礙\n萬事順利喜氣來",
+        explain: "解曰：運勢如日中天，正是身價提升、突破現狀的大好時機。"
+    },
+    {
+        num: "第三十八籤【庚寅】",
+        status: "【平籤】",
+        lines: "名利本是天註定\n何必苦苦去追求\n寬心且去隨緣過\n平安無事最為先",
+        explain: "解曰：得失心莫放太重，凡事盡力而為，保持內心平靜最重要。"
+    },
+    {
+        num: "第三十九籤【庚辰】",
+        status: "【中吉】",
+        lines: "意中若問神仙路\n勸君且去守舊宗\n自然逢得貴人引\n前途大好展鴻圖",
+        explain: "解曰：鞏固好現有基礎，等待貴人牽線，自然能開啟事業新局。"
+    },
+    {
+        num: "第四十籤【庚午】",
+        status: "【大吉】",
+        lines: "平生富貴由天定\n三生有幸逢盛世\n前途一片光明路\n萬事如意保平安",
+        explain: "解曰：天時地利人和兼備，事業與心願都能獲得圓滿的成果。"
+    },
+    // ===【第 41 ~ 50 籤】===
+    {
+        num: "第四十一籤【庚申】",
+        status: "【中吉】",
+        lines: "今行到此實難推\n歌歌樂笑自開心\n若逢虎頭人一遇\n事事如意保分明",
+        explain: "解曰：順其自然、笑口常開。若遇到屬虎的貴人或農曆正月，事情會更加順利。"
+    },
+    {
+        num: "第四十二籤【庚戌】",
+        status: "【平籤】",
+        lines: "一重山後一重水\n風浪波濤去又來\n若得貴人相引接\n切莫貪求求安康",
+        explain: "解曰：前方仍有考驗，需耐心應對，若有貴人相助方能平安化解。"
+    },
+    {
+        num: "第四十三籤【辛丑】",
+        status: "【上吉】",
+        lines: "一年四季皆如意\n萬事亨通大吉昌\n福德正神常護佑\n求財索利喜洋洋",
+        explain: "js解曰：運勢極佳，四時平安，無論求財或謀事皆能如願以償。"
+    },
+    {
+        num: "第四十四籤【辛卯】",
+        status: "【中吉】",
+        lines: "客去未來君休問\n事來官事理便明\n若逢貴人相提攜\n萬事吉慶喜氣生",
+        explain: "解曰：事情自然會有水落石出的一天，只要把握貴人相助的機會。"
+    },
+    {
+        num: "第四十五籤【辛巳】",
+        status: "【平籤】",
+        lines: "花開花謝本時節\n萬物生長順自然\n何須苦苦生煩惱\n自有福祿在後頭",
+        explain: "解曰：一切遵循自然規律，不要過度強求與焦慮，福報自有安排。"
+    },
+    {
+        num: "第四十六籤【辛未】",
+        status: "【下籤 / 謹慎】",
+        lines: "勸君把定心莫虛\n天註衣祿自有餘\n若動妄念生枝節\n不如守舊保安居",
+        explain: "解曰：心神不定容易誤事，安分守己、維持現狀才是上策。"
+    },
+    {
+        num: "第四十七籤【辛酉】",
+        status: "【上吉】",
+        lines: "君爾何須問聖賢\n前途光明在眼前\n寬心且去隨緣坐\n富貴由天莫苦求",
+        explain: "解曰：無須過度擔憂，事情對你有利，放寬心順其自然即可迎來好結果。"
+    },
+    {
+        num: "第四十八籤【辛亥】",
+        status: "【中吉】",
+        lines: "意中若問神仙路\n勸君且去守舊基\n自然逢得貴人引\n前途大好莫疑遲",
+        explain: "解曰：鞏固目前基礎，不要三心二意，貴人隨時會出現帶領你突破。"
+    },
+    {
+        num: "第四十九籤【壬子】",
+        status: "【大吉】",
+        lines: "言語雖多不可從\n風雲造化雨相逢\n暗中自有神明護\n萬事如意喜重重",
+        explain: "解曰：不受旁人雜音干擾，跟隨自己的直覺與天時，終能大吉大利。"
+    },
+    {
+        num: "第五十籤【壬寅】",
+        status: "【下下 / 待時】",
+        lines: "病中若得苦心勞\n到底完全總未遭\n去後方知前事錯\n官事理順莫強求",
+        explain: "解曰：警示籤。目前阻礙較多，切勿強行推進，宜先檢討沉澱自我。"
+    },
+
+    // ===【第 51 ~ 60 籤】===
+    {
+        num: "第五十一籤【壬辰】",
+        status: "【平籤】",
+        lines: "綠柳蒼蒼正當時\n任君此去作乾坤\n花果結實無殘損\n財源福祿自隨身",
+        explain: "解曰：時機與環境對你有利，大膽去執行，必能有所收穫。"
+    },
+    {
+        num: "第五十二籤【壬午】",
+        status: "【中吉】",
+        lines: "功名得位與君占\n汝身福祿自周全\n雲開月出光輝現\n作事隨心大吉昌",
+        explain: "解曰：運勢撥雲見日，所作所為皆能順心如意，福祿雙全。"
+    },
+    {
+        num: "第五十三籤【壬申】",
+        status: "【上吉】",
+        lines: "看君來問心中事\n積善之家慶有餘\n運逢得意身康泰\n萬事如意喜慶居",
+        explain: "解曰：平日累積的善緣在此時發揮作用，身心安泰、吉慶滿門。"
+    },
+    {
+        num: "第五十四籤【壬戌】",
+        status: "【平籤】",
+        lines: "孤燈寂寂夜沉沉\n萬事清吉莫操心\n君子樂得守正道\n待時而動福自臨",
+        explain: "解曰：適時沉潛、固守本分，等待對的時機再出發。"
+    },
+    {
+        num: "第五十五籤【癸丑】",
+        status: "【中吉】",
+        lines: "往來必有福神扶\n萬事和諧樂無憂\n求財如意多吉慶\n家門安泰喜常留",
+        explain: "解曰：神明護佑、家宅安寧，無論求財或謀事皆和諧順遂。"
+    },
+    {
+        num: "第五十六籤【癸卯】",
+        status: "【平籤】",
+        lines: "病中若得苦心勞\n到底完全總未遭\n事到頭來自然好\n莫把憂愁掛心頭",
+        explain: "解曰：過程雖有操勞，但結果會朝好的方向發展，切莫過度擔憂。"
+    },
+    {
+        num: "第五十七籤【癸巳】",
+        status: "【上吉】",
+        lines: "勸君把定心莫虛\n天註衣祿自有餘\n和合重重常吉慶\n時來運到喜安居",
+        explain: "解曰：堅定信心，命中福祿豐厚，時機一到喜事連連。"
+    },
+    {
+        num: "第五十八籤【癸未】",
+        status: "【大吉】",
+        lines: "欲去長江水滿帆\n前途順利好揚帆\n貴人相助，前途一片大好。"
+    },
+    {
+        num: "第五十九籤【癸酉】",
+        status: "【中吉】",
+        lines: "有心栽花花不發\n無心插柳柳成蔭\n凡事順其自然好\n莫強求之受苦心",
+        explain: "解曰：得失心不要太重，放下執念反而會有意外的收穫。"
+    },
+    {
+        num: "癸亥籤【第六十籤】",
+        status: "【大吉 / 圓滿】",
+        lines: "月出光輝本清吉\n浮雲總是蔽蔭色\n戶內安然無別事\n萬事清吉大吉昌",
+        explain: "解曰：圓滿結局。短暫的遮蔽不影響大局，闔家安康，心願終將達成。"
+    }
+];
+
+    // 求籤邏輯
+    function drawSign() {
+        const q = document.getElementById('draw-question').value.trim();
+        const animBox = document.getElementById('draw-anim');
+        const resBox = document.getElementById('draw-result');
+
+        if (!q) {
+            resBox.innerHTML = '<div style="color:#ff9999; font-weight:bold;">⚠️ 請先誠心輸入您的問題！</div>';
+            return;
+        }
+
+        resBox.innerHTML = '';
+        animBox.innerHTML = '<div class="anim-box shake">🎋</div>';
+        playSound('stick');
+
+        setTimeout(() => {
+            animBox.innerHTML = '';
+            const poem = poems[Math.floor(Math.random() * poems.length)];
+            const fullText = `${poem.num} ${poem.status}\n${poem.lines}\n${poem.explain}`;
+
+            resBox.innerHTML = `
+                <div class="poem-card">
+                    <div class="poem-title">${poem.num}</div>
+                    <div class="poem-status">${poem.status}</div>
+                    <div class="poem-content">${poem.lines}</div>
+                    <div class="poem-explain">💡 <b>聖意解析：</b><br>${poem.explain}</div>
+                </div>
+                <button class="share-btn" onclick="copyResult('${q}', '${poem.num} ${poem.status} - ${poem.explain}')">📋 複製籤詩結果</button>
+            `;
+            saveHistory('搖籤求籤', q, `${poem.num} ${poem.status}`);
+        }, 1500);
+    }
+
+    // 複製結果功能
+    function copyResult(q, ans) {
+        const text = `【聖明宮線上靈驗問事亭】\n我的問題：${q}\n神明指示：${ans}`;
+        navigator.clipboard.writeText(text).then(() => {
+            alert('已成功複製到剪貼簿！可直接貼給朋友分享。');
+        }).catch(() => {
+            alert('複製失敗，請手動選取文字複製。');
+        });
+    }
+
+    // 歷史紀錄儲存與讀取 (localStorage)
+    function saveHistory(type, q, res) {
+        let history = JSON.parse(localStorage.getItem('temple_history') || '[]');
+        const time = new Date().toLocaleString('zh-TW', { hour12: false });
+        history.unshift({ type, q, res, time });
+        if (history.length > 20) history.pop(); // 最多存 20 條
+        localStorage.setItem('temple_history', JSON.stringify(history));
+    }
+
+    function loadHistory() {
+        const listDiv = document.getElementById('history-list');
+        let history = JSON.parse(localStorage.getItem('temple_history') || '[]');
+        if (history.length === 0) {
+            listDiv.innerHTML = '<div style="color:#888; text-align:center; padding:20px;">尚無紀錄</div>';
+            return;
+        }
+        listDiv.innerHTML = history.map(h => `
+            <div class="history-item">
+                <div class="history-time">[${h.time}] ${h.type}</div>
+                <div><b>問：</b>${h.q}</div>
+                <div><b>答：</b>${h.res}</div>
+            </div>
+        `).join('');
+    }
+
+    function clearHistory() {
+        if (confirm('確定要清除所有歷史紀錄嗎？')) {
+            localStorage.removeItem('temple_history');
+            loadHistory();
+        }
+    }
+</script>
+
+</body>
+</html>
